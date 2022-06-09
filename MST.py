@@ -8,6 +8,8 @@ import time
 import copy
 from unicodedata import name
 import matplotlib.pyplot as plt
+from openpyxl import Workbook, load_workbook
+import xlrd
 
 from numpy import array, size
 plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
@@ -15,8 +17,13 @@ plt.rcParams["axes.unicode_minus"] = False  # 该语句解决图像中的“-”
 # 随机生成图
 
 NoCount = 10000000000
-
+nameArray = ["Krushal", "Prim", "Prim_Array", "Sollin"]
 ConnectArray = []
+# 定义写入的Excel文件
+wb = Workbook()
+
+ws = wb.create_sheet("che")
+ws.append(["时间"]+nameArray)
 
 
 def makeMST(size, value):
@@ -268,7 +275,17 @@ def WriteExpdata(KTime, PrimT, PrimA_T, Sollin_T, Size):
         KTime, PrimT, PrimA_T, Sollin_T, Size)
     f.write(string)
 
+
+def WriteExpdata(KTime, PrimT, PrimA_T, Sollin_T, Size, Max):
+    f = open("experiment_data_"+str(Max)+".txt", "a+")
+    string = "Krushal Time is %6f , Prim Time is %6f , Prim_Array Time is %6f , Sollin Time is %6f Size is %d \n" % (
+        KTime, PrimT, PrimA_T, Sollin_T, Size)
+    f.write(string)
 #  用来做调试以及可视化数据的函数
+
+
+def WriteIntoExcel(col):
+    ws.append(col)
 
 
 def main():
@@ -305,7 +322,7 @@ def main2():
     Begin = 10
     x = []
     y = [[], [], [], []]
-    nameArray = ["Krushal", "Prim", "Prim_Array", "Sollin"]
+
     while(Begin <= End):
         MST = makeMST(Begin, Begin)
         KrushalTime = Krushal(MST)
@@ -318,10 +335,37 @@ def main2():
         y[1].append(PrimTime)
         y[2].append(Prim_Array_Time)
         y[3].append(SollinTime)
-        WriteExpdata(KrushalTime, PrimTime, Prim_Array_Time, SollinTime, Begin)
+        WriteExpdata(KrushalTime, PrimTime, Prim_Array_Time,
+                     SollinTime, Begin, End)
+        WriteIntoExcel([Begin, KrushalTime*1000, PrimTime*1000,
+                       Prim_Array_Time*1000, SollinTime*1000])
         Begin += 10
     # print(x, y, nameArray)
+    wb.save("experimentData_"+str(End)+".xlsx")
     DrawPicture(x, y, nameArray)
 
 
-main2()
+def main3():
+    print("请输入你所要读取的文件")
+    filename = input()
+    print(filename)
+    wb2 = load_workbook(filename.strip("\n"))
+    che = wb2["che"]
+    x = []
+    y = [[], [], [], []]
+    firstRow = True
+    for ele in che.values:
+        if firstRow:
+            firstRow = False
+            continue
+        # print(ele)
+        x.append(ele[0])
+        y[0].append(ele[1])
+        y[1].append(ele[2])
+        y[2].append(ele[3])
+        y[3].append(ele[4])
+    # print(x, y, nameArray
+    DrawPicture(x, y, nameArray)
+
+
+main3()
